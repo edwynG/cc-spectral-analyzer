@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from playsound import playsound
@@ -102,7 +103,8 @@ def load_signal():
             signal = data.astype(np.float32) / np.max(np.abs(data))
 
             # Reproducir la señal cargada
-            playsound(path)
+            path_relative = os.path.relpath(path, os.getcwd())
+            playsound(path_relative)
 
             # Graficar la señal cargada
             t = np.linspace(0, len(signal) / fs_load, num=len(signal))
