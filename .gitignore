@@ -1,0 +1,29 @@
+# Entorno virtual (venv o env)
+env/
+venv/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+
+# Archivos de configuración de IDEs y editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de audio generados o temporales
+*.wav
+*.mp3
+
+# Archivos de logs o temporales
+*.log
+*.tmp
+
+# Archivos de sistema (macOS, Windows)
+.DS_Store
+Thumbs.db
+
+# Archivos de salida de matplotlib o gráficos si los guardas localmente
+*.png
+*.jpg
