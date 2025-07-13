@@ -8,7 +8,7 @@ class Interface:
     def __init__(self, master):
         self.master = master
         master.title("DTMF Marcador y Decodificador")
-        master.geometry("300x500") # Tamaño de ventana más estilizado
+        master.geometry("500x500") # Tamaño de ventana más estilizado
         master.resizable(False, False) # No redimensionable para mantener el estilo
         master.configure(bg='#1C1C1E') # Fondo oscuro para el tema
 

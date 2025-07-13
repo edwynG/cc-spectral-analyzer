@@ -53,5 +53,5 @@ def generateWav(phone_number: str, filename="tono.wav"):
     write(f"{filename}", Fs, signalScaled)
 
 if __name__ == '__main__':
-    number = "04121793531"
+    number = "04241543777"
     generateWav(number)
