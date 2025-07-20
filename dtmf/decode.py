@@ -8,35 +8,35 @@ from scipy.fft import fft, fftfreq
 from tkinter import filedialog, messagebox
 from . import dtmf_map, fc, fr
 
-def decode_signal(signal, fs):
+def signalDecode(signal, fs):
     """
     Decodifica una señal DTMF en dígitos usando segmentación por energía.
     """
     digits = ''
     
     # --- Segmentación por Energía ---
-    window_size = int(fs * 0.02)  # Ventana de 20ms
+    window_size = int(fs * 0.02)
     # Umbral dinámico: 20% de la energía media de la señal
     energy_threshold = np.mean(signal**2) * 0.2 
 
-    in_tone = False
-    start_idx = 0
+    toneIn = False
+    startIndex = 0
     
     for i in range(0, len(signal) - window_size, window_size):
         window_energy = np.mean(signal[i:i+window_size]**2)
         
         # Detección del inicio de un tono
-        if not in_tone and window_energy > energy_threshold:
-            in_tone = True
-            start_idx = i
+        if not toneIn and window_energy > energy_threshold:
+            toneIn = True
+            startIndex = i
             
         # Detección del final de un tono
-        elif in_tone and window_energy < energy_threshold:
-            in_tone = False
-            end_idx = i
+        elif toneIn and window_energy < energy_threshold:
+            toneIn = False
+            endIndex = i
             
             # Procesar el segmento encontrado
-            segment = signal[start_idx:end_idx]
+            segment = signal[startIndex:endIndex]
             
             # Ignorar ruidos o segmentos muy cortos
             if len(segment) < int(fs * 0.1):
@@ -86,14 +86,14 @@ def decode_signal(signal, fs):
     
     return digits
 
-def load_signal():
+def signalLoad():
         """Maneja la carga y decodificación de una señal de archivo WAV."""
         path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
         if not path:
             return
         
         try:
-            fs_load, data = wavfile.read(path)
+            loadFs, data = wavfile.read(path)
             
             # Convertir a mono si es estéreo
             if data.ndim > 1:
@@ -103,11 +103,11 @@ def load_signal():
             signal = data.astype(np.float32) / np.max(np.abs(data))
 
             # Reproducir la señal cargada
-            path_relative = os.path.relpath(path, os.getcwd())
-            playsound(path_relative)
+            relativePath = os.path.relpath(path, os.getcwd())
+            playsound(relativePath)
 
             # Graficar la señal cargada
-            t = np.linspace(0, len(signal) / fs_load, num=len(signal))
+            t = np.linspace(0, len(signal) / loadFs, num=len(signal))
             plt.figure("Señal Cargada")
             plt.clf()
             plt.plot(t, signal, color='#FF9500') # Color naranja estilo iOS
@@ -118,8 +118,8 @@ def load_signal():
             plt.show(block=False)
 
             # Decodificar la señal
-            decoded_digits = decode_signal(signal, fs_load)
-            return decoded_digits
+            digitsDecode = signalDecode(signal, loadFs)
+            return digitsDecode
             
             
         except Exception as e:
