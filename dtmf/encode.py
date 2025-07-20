@@ -1,36 +1,55 @@
 import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.fft import fft, fftfreq
 from scipy.io import wavfile
+from scipy.fft import fft, fftfreq
 from playsound import playsound
 from utils.paths import safe_remove
 from . import dtmf_map, T, Fs
 
-# La función genera la señal de audio que corresponde a un tono DTMF de un dígito, 
-# combinando dos frecuencias específicas en una señal senoidal que puede ser reproducida o graficada.
 def generate_tone(digit):
+    """
+    Genera un tono DTMF tradicional (suma de dos senos) con fundido
+    para evitar clics al inicio y al final.
+    """
     if digit not in dtmf_map:
         raise ValueError(f"Dígito DTMF inválido: {digit}")
     f1, f2 = dtmf_map[digit]
-    # paso fijo 1/Fs
-    t = np.arange(0, T, 1/Fs)  
+
+    # Vector de tiempo
+    t = np.arange(0, T, 1/Fs)
+
+    # 1) Síntesis directa: suma de dos senoidales
     y = 0.5 * (np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t))
+
+    # 2) Aplicar fundido de 5 ms (fade-in y fade-out) para quitar clics
+    fade_len = int(0.005 * Fs)
+    if fade_len * 2 < len(y):
+        fade = np.ones_like(y)
+        fade_in = np.linspace(0, 1, fade_len)
+        fade_out = fade_in[::-1]
+        fade[:fade_len]    = fade_in
+        fade[-fade_len:]   = fade_out
+        y *= fade
+
     return t, y
 
 def play_and_plot(digit):
-    """Reproduce el tono y grafica la señal y su espectro."""
+    """
+    Reproduce el tono DTMF y grafica:
+      1) Señal en el dominio del tiempo.
+      2) Magnitud del espectro (solo frecuencias positivas) en línea.
+    """
     t, y = generate_tone(digit)
 
-    # wav temporal
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmpfile:
-        wavfile.write(tmpfile.name, Fs, np.int16(y * 32767))
-        temp_path = tmpfile.name
-    
-    playsound(temp_path)
-    safe_remove(temp_path)
+    # Generar WAV temporal y reproducir
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
+        wavfile.write(tmp.name, Fs, np.int16(y * 32767))
+        path = tmp.name
+    playsound(path)
+    safe_remove(path)
 
-    # grafica  continua
+    # --- Dominio del tiempo ---
     plt.figure("Señal Continua")
     plt.clf()
     plt.plot(t, y, color='#007AFF')
@@ -40,16 +59,20 @@ def play_and_plot(digit):
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.show(block=False)
 
-    # calculo de  la FFT
+    # --- Espectro de frecuencia ---
     N = len(y)
     Y = fft(y)
-    xf = fftfreq(N, 1 / Fs)
+    xf = fftfreq(N, 1/Fs)
 
-    # grafica de frecuencia
+    # Solo frecuencias positivas
+    pos = xf > 0
+    xf_pos = xf[pos]
+    Y_mag  = np.abs(Y[pos])
+
     plt.figure("Espectro de Frecuencia")
     plt.clf()
-    plt.stem(xf, np.abs(Y), basefmt=" ", linefmt="#3443C7", markerfmt='o')
-    plt.xlim(600, 1600)
+    plt.plot(xf_pos, Y_mag, color='#3443C7')
+    plt.xlim(600, 1550)
     plt.title(f"Espectro discreto: dígito {digit}", fontsize=14, fontweight='bold')
     plt.xlabel('Frecuencia (Hz)')
     plt.ylabel('Magnitud')

@@ -1,11 +1,12 @@
 import numpy as np
+from scipy.fft import ifft    # importamos ifft
 from scipy.io.wavfile import write
 
 # Frecuencias DTMF (Hz)
 fr = np.array([697, 770, 852, 941])
 fc = np.array([1209, 1336, 1477])
 
-# Mapeo de dígitos a sus frecuencias (fila, columna)
+# Mapeo de dígitos a sus frecuencias
 dtmf_map = {
     '1': (697, 1209), '2': (697, 1336), '3': (697, 1477),
     '4': (770, 1209), '5': (770, 1336), '6': (770, 1477),
@@ -14,7 +15,7 @@ dtmf_map = {
 }
 
 # Parámetros de la señal
-T = 0.25      # Duración del tono (segundos)
+T = 0.25      # Duración del tono (s)
 Fs = 32768    # Tasa de muestreo (Hz)
 
 def generate_tone_for_wav(digit: str, duration: float, Fs: int) -> np.ndarray:
@@ -22,36 +23,38 @@ def generate_tone_for_wav(digit: str, duration: float, Fs: int) -> np.ndarray:
         raise ValueError(f"Dígito DTMF inválido: {digit}")
 
     f1, f2 = dtmf_map[digit]
-    t = np.arange(0, duration, 1/Fs)  # paso fijo 1/Fs
-    tone1 = np.sin(2 * np.pi * f1 * t)
-    tone2 = np.sin(2 * np.pi * f2 * t)
-    distance = 0.5 
-    return distance * (tone1 + tone2)
+    N = int(duration * Fs)
+
+    # Creamos el espectro con dos picos para f1 y f2
+    Y = np.zeros(N, dtype=complex)
+    k1 = int(f1 * N / Fs)
+    k2 = int(f2 * N / Fs)
+    Y[k1]  = N * 0.25
+    Y[-k1] = N * 0.25
+    Y[k2]  = N * 0.25
+    Y[-k2] = N * 0.25
+
+    # Transformada inversa de Fourier para sintetizar el tono
+    # Aquí aplicamos la iFFT para generar directamente la señal de audio
+    tone = ifft(Y).real
+    return tone
 
 def generateWav(phone_number: str, filename="tono.wav"):
-
     partsSignal = []
-    # intervalo 
     timeSilence = 0.15
-    # array de silencio 
     samplesS = int(np.ceil(timeSilence * Fs))
     segment = np.zeros(samplesS, dtype=float)
 
     for digit in phone_number:
         tones = generate_tone_for_wav(digit, T, Fs)
         partsSignal.append(tones)
-        # silencio entre tonos
         partsSignal.append(segment)
 
-    # tono y silencio final arreglo de tono de digito final
     final_signal = np.concatenate(partsSignal)
-
-    # normalizamos y ponemos conversión a 16 bits
     scaled = final_signal / np.max(np.abs(final_signal))
     signalScaled = np.int16(scaled * 32767)
-
     write(f"{filename}", Fs, signalScaled)
-
+    
 if __name__ == '__main__':
     number = "04241543777"
     generateWav(number)
