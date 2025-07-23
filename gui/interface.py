@@ -17,7 +17,7 @@ class Interface:
         # tema
         style.theme_use('clam')
         
-        # estilos del teclado
+        # estilos de botones
         style.configure('TButton', 
                         font=('SF Pro Display', 18, 'bold'),
                         foreground='white',
@@ -29,7 +29,7 @@ class Interface:
         style.map('TButton', 
                   background=[('active', "#0C0C92")])
 
-        # boton de carga
+        # carga senal
         style.configure('Load.TButton',
                         font=('SF Pro Display', 14),
                         foreground='white',
@@ -41,19 +41,20 @@ class Interface:
         style.map('Load.TButton',
                   background=[('active', '#007AFF')])
 
-        # Estilo para la etiqueta de resultado
+        # estilo resultado
         style.configure('TLabel',
                         font=('SF Pro Display', 14),
                         background='#1C1C1E',
                         foreground='white')
 
-        # Frame para los botones del teclado
+        # frame de botones
         btn_frame = tk.Frame(master, bg='#1C1C1E')
         btn_frame.pack(pady=20)
 
+        # teclas
         digit_keys = ['1','2','3','4','5','6','7','8','9','*','0','#']
         
-        # botones
+        # display de botones en el teclado
         key_layout = [
             ['1', '2', '3'],
             ['4', '5', '6'],
@@ -61,6 +62,7 @@ class Interface:
             ['*', '0', '#']
         ]
 
+        # botones en el frame uno a uno
         for r_idx, row_keys in enumerate(key_layout):
             for c_idx, d in enumerate(row_keys):
                 btn = ttk.Button(btn_frame, text=d, 
@@ -68,13 +70,12 @@ class Interface:
                                  width=4, style='TButton')
                 btn.grid(row=r_idx, column=c_idx, padx=10, pady=10)
 
-        # boton de carga
+        # insert del boton de cargar señal
         load_btn = ttk.Button(master, text="Cargar Señal", command= self.eventSignal,
                               style='Load.TButton')
         # arreglo horizontal
         load_btn.pack(pady=20, padx=20, fill='x')
-
-        # resultado
+        # resultado 
         self.result_label = ttk.Label(master, text="Dígitos: ", style='TLabel')
         self.result_label.pack(pady=10)
 
