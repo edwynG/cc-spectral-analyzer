@@ -2,21 +2,21 @@ import numpy as np
 from scipy.fft import ifft    # importamos ifft
 from scipy.io.wavfile import write
 
-# Frecuencias DTMF (Hz)
+# frecuencias DTMF (Hz)
 fr = np.array([697, 770, 852, 941])
 fc = np.array([1209, 1336, 1477])
 
-# Mapeo de dígitos a sus frecuencias
+# digitos con sus frecuencias
 dtmf_map = {
     '1': (697, 1209), '2': (697, 1336), '3': (697, 1477),
     '4': (770, 1209), '5': (770, 1336), '6': (770, 1477),
     '7': (852, 1209), '8': (852, 1336), '9': (852, 1477),
     '*': (941, 1209), '0': (941, 1336), '#': (941, 1477)
 }
-
-# Parámetros de la señal
-T = 0.25      # Duración del tono (s)
-Fs = 32768    # Tasa de muestreo (Hz)
+#tiempo de tono
+T = 0.25 
+# hz
+Fs = 32768
 
 def generate_tone_for_wav(digit: str, duration: float, Fs: int) -> np.ndarray:
     if digit not in dtmf_map:
@@ -33,13 +33,12 @@ def generate_tone_for_wav(digit: str, duration: float, Fs: int) -> np.ndarray:
     Y[-k1] = N * 0.25
     Y[k2]  = N * 0.25
     Y[-k2] = N * 0.25
-
-    # Transformada inversa de Fourier para sintetizar el tono
+    
     # Aquí aplicamos la iFFT para generar directamente la señal de audio
     tone = ifft(Y).real
     return tone
 
-def generateWav(phone_number: str, filename="tono.wav"):
+def generateWav(phone_number: str, filename="generado.wav"):
     partsSignal = []
     timeSilence = 0.15
     samplesS = int(np.ceil(timeSilence * Fs))
@@ -56,5 +55,5 @@ def generateWav(phone_number: str, filename="tono.wav"):
     write(f"{filename}", Fs, signalScaled)
     
 if __name__ == '__main__':
-    number = "04241543777"
+    number = "04143386275"
     generateWav(number)

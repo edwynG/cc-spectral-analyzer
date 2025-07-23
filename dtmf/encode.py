@@ -8,21 +8,18 @@ from utils.paths import safe_remove
 from . import dtmf_map, T, Fs
 
 def generate_tone(digit):
-    """
-    Genera un tono DTMF tradicional (suma de dos senos) con fundido
-    para evitar clics al inicio y al final.
-    """
+    
     if digit not in dtmf_map:
         raise ValueError(f"Dígito DTMF inválido: {digit}")
     f1, f2 = dtmf_map[digit]
 
-    # Vector de tiempo
+    # vector de tiempo
     t = np.arange(0, T, 1/Fs)
 
-    # 1) Síntesis directa: suma de dos senoidales
+    # síntesis directa: suma de dos senoidales
     y = 0.5 * (np.sin(2 * np.pi * f1 * t) + np.sin(2 * np.pi * f2 * t))
 
-    # 2) Aplicar fundido de 5 ms (fade-in y fade-out) para quitar clics
+    # poner fundido de 5 ms para eliminar clicks
     fade_len = int(0.005 * Fs)
     if fade_len * 2 < len(y):
         fade = np.ones_like(y)
@@ -35,21 +32,16 @@ def generate_tone(digit):
     return t, y
 
 def play_and_plot(digit):
-    """
-    Reproduce el tono DTMF y grafica:
-      1) Señal en el dominio del tiempo.
-      2) Magnitud del espectro (solo frecuencias positivas) en línea.
-    """
+    
     t, y = generate_tone(digit)
 
-    # Generar WAV temporal y reproducir
+    # wav temporal y reproducir
     with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:
         wavfile.write(tmp.name, Fs, np.int16(y * 32767))
         path = tmp.name
     playsound(path)
     safe_remove(path)
 
-    # --- Dominio del tiempo ---
     plt.figure("Señal Continua")
     plt.clf()
     plt.plot(t, y, color='#007AFF')
@@ -59,12 +51,10 @@ def play_and_plot(digit):
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.show(block=False)
 
-    # --- Espectro de frecuencia ---
     N = len(y)
     Y = fft(y)
     xf = fftfreq(N, 1/Fs)
 
-    # Solo frecuencias positivas
     pos = xf > 0
     xf_pos = xf[pos]
     Y_mag  = np.abs(Y[pos])

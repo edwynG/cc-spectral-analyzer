@@ -15,8 +15,8 @@ def signalDecode(signal, fs):
       2) FFT para extraer picos de frecuencia.
     """
     digits = ''
-    window_size = int(fs * 0.02)                       # 20 ms
-    energy_threshold = np.mean(signal**2) * 0.2         # 20% de la energía media
+    window_size = int(fs * 0.02)
+    energy_threshold = np.mean(signal**2) * 0.2 
 
     toneIn = False
     startIndex = 0
@@ -36,7 +36,7 @@ def signalDecode(signal, fs):
             if len(segment) < int(fs * 0.1):
                 continue
 
-            # -- FFT aplicado al segmento --
+            # FFT aplicado al segmento
             Y = fft(segment)
             freqs = fftfreq(len(segment), 1 / fs)
 
@@ -74,10 +74,7 @@ def signalDecode(signal, fs):
 
 
 def plot_spectrogram(signal, fs):
-    """
-    Grafica un espectrograma (colores azules) para ver
-    la densidad de energía en frecuencia-tiempo.
-    """
+    # spectograma para denotar bien las graficas
     plt.figure("Espectrograma")
     plt.clf()
     # ventana 20 ms, solapamiento 10 ms
@@ -88,7 +85,7 @@ def plot_spectrogram(signal, fs):
         NFFT=NFFT,
         Fs=fs,
         noverlap=noverlap,
-        cmap='Blues',         # colormap azul
+        cmap='Blues',
         scale='dB'
     )
     plt.ylim(500, 1600)
@@ -103,16 +100,11 @@ def plot_spectrogram(signal, fs):
 
 
 def signalLoad():
-    """
-    Carga un WAV, lo reproduce, grafica:
-      1) Señal en el dominio del tiempo (azul claro).
-      2) Espectrograma (azul oscuro).
-    Luego retorna los dígitos decodificados.
-    """
+    
     path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
     if not path:
         return
-
+    # arreglo para evitar errores
     try:
         fs, data = wavfile.read(path)
         if data.ndim > 1:
@@ -121,7 +113,7 @@ def signalLoad():
 
         playsound(path)
 
-        # Dominio del tiempo (azul claro)
+        # Dominio del tiempo
         t = np.linspace(0, len(signal) / fs, num=len(signal))
         plt.figure("Señal Cargada")
         plt.clf()
@@ -132,11 +124,11 @@ def signalLoad():
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.show(block=False)
 
-        # Espectrograma (azul oscuro)
+        # Espectrograma
         plot_spectrogram(signal, fs)
 
-        # Decodificación
+        # Decodificacion
         return signalDecode(signal, fs)
-
+    
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo procesar el archivo:\n{e}")
