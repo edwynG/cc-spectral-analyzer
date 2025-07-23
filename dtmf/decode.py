@@ -11,8 +11,9 @@ from . import dtmf_map, fc, fr
 def signalDecode(signal, fs):
     """
     Decodifica una señal DTMF en dígitos usando:
-      1) Segmentación por energía.
-      2) FFT para extraer picos de frecuencia.
+      Segmentación por energía.
+      FFT para extraer picos de frecuencia.
+      
     """
     digits = ''
     window_size = int(fs * 0.02)
