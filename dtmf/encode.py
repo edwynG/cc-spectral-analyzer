@@ -5,13 +5,13 @@ from scipy.io import wavfile
 from scipy.fft import fft, fftfreq
 from playsound import playsound
 from utils.paths import safe_remove
-from . import dtmf_map, T, Fs
+from . import dtmfFreqs, T, Fs
 
-def generate_tone(digit):
+def generateTone(digit):
     
-    if digit not in dtmf_map:
+    if digit not in dtmfFreqs:
         raise ValueError(f"Dígito DTMF inválido: {digit}")
-    f1, f2 = dtmf_map[digit]
+    f1, f2 = dtmfFreqs[digit]
 
     # vector de tiempo
     t = np.arange(0, T, 1/Fs)
@@ -31,9 +31,9 @@ def generate_tone(digit):
 
     return t, y
 
-def play_and_plot(digit):
+def generatePlots(digit):
     
-    t, y = generate_tone(digit)
+    t, y = generateTone(digit)
 
     # wav temporal y reproducir
     with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp:

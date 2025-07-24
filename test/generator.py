@@ -7,22 +7,23 @@ fr = np.array([697, 770, 852, 941])
 fc = np.array([1209, 1336, 1477])
 
 # digitos con sus frecuencias
-dtmf_map = {
+dtmfFreqs = {
     '1': (697, 1209), '2': (697, 1336), '3': (697, 1477),
     '4': (770, 1209), '5': (770, 1336), '6': (770, 1477),
     '7': (852, 1209), '8': (852, 1336), '9': (852, 1477),
     '*': (941, 1209), '0': (941, 1336), '#': (941, 1477)
 }
+
 #tiempo de tono
 T = 0.25 
 # hz
 Fs = 32768
 
-def generate_tone_for_wav(digit: str, duration: float, Fs: int) -> np.ndarray:
-    if digit not in dtmf_map:
+def generateToneWav(digit: str, duration: float, Fs: int) -> np.ndarray:
+    if digit not in dtmfFreqs:
         raise ValueError(f"Dígito DTMF inválido: {digit}")
 
-    f1, f2 = dtmf_map[digit]
+    f1, f2 = dtmfFreqs[digit]
     N = int(duration * Fs)
 
     # Creamos el espectro con dos picos para f1 y f2
@@ -45,7 +46,7 @@ def generateWav(phone_number: str, filename="generado.wav"):
     segment = np.zeros(samplesS, dtype=float)
 
     for digit in phone_number:
-        tones = generate_tone_for_wav(digit, T, Fs)
+        tones = generateToneWav(digit, T, Fs)
         partsSignal.append(tones)
         partsSignal.append(segment)
 

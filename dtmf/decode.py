@@ -6,30 +6,32 @@ from scipy.fft import fft, fftfreq
 from scipy import signal as sig
 from playsound import playsound
 from tkinter import filedialog, messagebox
-from . import dtmf_map, fc, fr
+from . import dtmfFreqs, fc, fr
 
 def signalDecode(signal, fs):
+
+
     """
     Decodifica una señal DTMF en dígitos usando:
       Segmentación por energía.
       FFT para extraer picos de frecuencia.
-      
     """
+    
     digits = ''
-    window_size = int(fs * 0.02)
-    energy_threshold = np.mean(signal**2) * 0.2 
+    windowSize = int(fs * 0.02)
+    energyThreshold = np.mean(signal**2) * 0.2 
 
     toneIn = False
     startIndex = 0
 
-    for i in range(0, len(signal) - window_size, window_size):
-        window_energy = np.mean(signal[i:i + window_size]**2)
+    for i in range(0, len(signal) - windowSize, windowSize):
+        window_energy = np.mean(signal[i:i + windowSize]**2)
 
-        if not toneIn and window_energy > energy_threshold:
+        if not toneIn and window_energy > energyThreshold:
             toneIn = True
             startIndex = i
 
-        elif toneIn and window_energy < energy_threshold:
+        elif toneIn and window_energy < energyThreshold:
             toneIn = False
             endIndex = i
             segment = signal[startIndex:endIndex]
@@ -42,27 +44,27 @@ def signalDecode(signal, fs):
             freqs = fftfreq(len(segment), 1 / fs)
 
             pos = freqs > 0
-            freqs_pos = freqs[pos]
+            freqsPos = freqs[pos]
             mags = np.abs(Y[pos])
 
-            mask = (freqs_pos > 600) & (freqs_pos < 1550)
+            mask = (freqsPos > 600) & (freqsPos < 1550)
             if not np.any(mask):
                 continue
 
-            freqs_rel = freqs_pos[mask]
-            mags_rel = mags[mask]
-            if len(mags_rel) < 2:
+            freqsRel = freqsPos[mask]
+            magsRel = mags[mask]
+            if len(magsRel) < 2:
                 continue
 
             # dos picos más grandes
-            peaks = np.argsort(mags_rel)[-2:]
-            f_low, f_high = sorted(freqs_rel[peaks])
+            peaks = np.argsort(magsRel)[-2:]
+            fLow, fHigh = sorted(freqsRel[peaks])
 
-            row = fr[np.argmin(np.abs(fr - f_low))]
-            col = fc[np.argmin(np.abs(fc - f_high))]
+            row = fr[np.argmin(np.abs(fr - fLow))]
+            col = fc[np.argmin(np.abs(fc - fHigh))]
 
             found = '?'
-            for d, (r, c) in dtmf_map.items():
+            for d, (r, c) in dtmfFreqs.items():
                 if r == row and c == col:
                     found = d
                     break
@@ -74,7 +76,7 @@ def signalDecode(signal, fs):
     return digits
 
 
-def plot_spectrogram(signal, fs):
+def spectrogramPlot(signal, fs):
     # spectograma para denotar bien las graficas
     plt.figure("Espectrograma")
     plt.clf()
@@ -126,7 +128,7 @@ def signalLoad():
         plt.show(block=False)
 
         # Espectrograma
-        plot_spectrogram(signal, fs)
+        spectrogramPlot(signal, fs)
 
         # Decodificacion
         return signalDecode(signal, fs)
