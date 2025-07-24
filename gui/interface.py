@@ -2,7 +2,7 @@ from scipy.fft import fft, fftfreq
 import tkinter as tk
 from tkinter import ttk
 from dtmf.decode import signalLoad
-from dtmf.encode import play_and_plot
+from dtmf.encode import generatePlots
 
 class Interface:
     def __init__(self, master):
@@ -17,7 +17,7 @@ class Interface:
         # tema
         style.theme_use('clam')
         
-        # estilos del teclado
+        # estilos de botones
         style.configure('TButton', 
                         font=('SF Pro Display', 18, 'bold'),
                         foreground='white',
@@ -29,7 +29,7 @@ class Interface:
         style.map('TButton', 
                   background=[('active', "#0C0C92")])
 
-        # boton de carga
+        # carga senal
         style.configure('Load.TButton',
                         font=('SF Pro Display', 14),
                         foreground='white',
@@ -41,40 +41,41 @@ class Interface:
         style.map('Load.TButton',
                   background=[('active', '#007AFF')])
 
-        # Estilo para la etiqueta de resultado
+        # estilo resultado
         style.configure('TLabel',
                         font=('SF Pro Display', 14),
                         background='#1C1C1E',
                         foreground='white')
 
-        # Frame para los botones del teclado
-        btn_frame = tk.Frame(master, bg='#1C1C1E')
-        btn_frame.pack(pady=20)
+        # frame de botones
+        buttonFrame = tk.Frame(master, bg='#1C1C1E')
+        buttonFrame.pack(pady=20)
 
-        digit_keys = ['1','2','3','4','5','6','7','8','9','*','0','#']
+        # teclas
+        keyDig = ['1','2','3','4','5','6','7','8','9','*','0','#']
         
-        # botones
-        key_layout = [
+        # display de botones en el teclado
+        keyBord = [
             ['1', '2', '3'],
             ['4', '5', '6'],
             ['7', '8', '9'],
             ['*', '0', '#']
         ]
 
-        for r_idx, row_keys in enumerate(key_layout):
+        # botones en el frame uno a uno
+        for r_idx, row_keys in enumerate(keyBord):
             for c_idx, d in enumerate(row_keys):
-                btn = ttk.Button(btn_frame, text=d, 
-                                 command=lambda digit=d: play_and_plot(digit),
+                btn = ttk.Button(buttonFrame, text=d, 
+                                 command=lambda digit=d: generatePlots(digit),
                                  width=4, style='TButton')
                 btn.grid(row=r_idx, column=c_idx, padx=10, pady=10)
 
-        # boton de carga
-        load_btn = ttk.Button(master, text="Cargar Señal", command= self.eventSignal,
+        # insert del boton de cargar señal
+        btnLoad = ttk.Button(master, text="Cargar Señal", command= self.eventSignal,
                               style='Load.TButton')
         # arreglo horizontal
-        load_btn.pack(pady=20, padx=20, fill='x')
-
-        # resultado
+        btnLoad.pack(pady=20, padx=20, fill='x')
+        # resultado 
         self.result_label = ttk.Label(master, text="Dígitos: ", style='TLabel')
         self.result_label.pack(pady=10)
 
