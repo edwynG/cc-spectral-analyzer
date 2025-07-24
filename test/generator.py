@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.fft import ifft    # importamos ifft
 from scipy.io.wavfile import write
+import sys
 
 # frecuencias DTMF (Hz)
 fr = np.array([697, 770, 852, 941])
@@ -36,7 +37,7 @@ def generateToneWav(digit: str, duration: float, Fs: int) -> np.ndarray:
     Y[-k2] = N * 0.25
     
     # Aquí aplicamos la iFFT para generar directamente la señal de audio
-    tone = ifft(Y).real
+    tone = ifft(Y).real # type: ignore
     return tone
 
 def generateWav(phone_number: str, filename="generado.wav"):
@@ -56,5 +57,15 @@ def generateWav(phone_number: str, filename="generado.wav"):
     write(f"{filename}", Fs, signalScaled)
     
 if __name__ == '__main__':
-    number = "04143386275"
+
+    args = sys.argv[1:]
+    if len(args) != 2 or args[0] not in ("--num", "-n"):
+        print("Uso: python generator.py --num <número de 11 dígitos>")
+        sys.exit(1)
+
+    number = args[1]
+    if not (number.isdigit() and len(number) == 11):
+        print("Error: El número debe tener exactamente 11 dígitos numéricos.")
+        sys.exit(1)
+
     generateWav(number)

@@ -46,7 +46,7 @@ def signalDecode(signal, fs):
 
             pos = freqs > 0
             freqsPos = freqs[pos]
-            mags = np.abs(Y[pos])
+            mags = np.abs(Y[pos]) # type: ignore
 
             mask = (freqsPos > 600) & (freqsPos < 1550)
             if not np.any(mask):

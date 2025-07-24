@@ -80,6 +80,9 @@ class Interface:
         self.result_label.pack(pady=10)
 
     def eventSignal(self):
-        self.result_label.config(text=f"Dígitos: {signalLoad()}")
+        text = signalLoad()
+        if text:
+            self.result_label.config(text=f"Dígitos: {text}")
+        
 
 
