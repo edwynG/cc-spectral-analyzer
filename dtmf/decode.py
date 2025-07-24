@@ -1,126 +1,140 @@
-import numpy as np
+
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
-from playsound import playsound
-from scipy.io import wavfile
 from scipy.fft import fft, fftfreq
+from scipy import signal as sig
+from playsound import playsound
 from tkinter import filedialog, messagebox
-from . import dtmf_map, fc, fr
+from . import dtmfFreqs, fc, fr
 
-def decode_signal(signal, fs):
+def signalDecode(signal, fs):
+
+
     """
-    Decodifica una señal DTMF en dígitos usando segmentación por energía.
+    Decodifica una señal DTMF en dígitos usando:
+      Segmentación por energía.
+      FFT para extraer picos de frecuencia.
     """
+    
     digits = ''
-    
-    # --- Segmentación por Energía ---
-    window_size = int(fs * 0.02)  # Ventana de 20ms
-    # Umbral dinámico: 20% de la energía media de la señal
-    energy_threshold = np.mean(signal**2) * 0.2 
+    windowSize = int(fs * 0.02)
+    energyThreshold = np.mean(signal**2) * 0.2 
 
-    in_tone = False
-    start_idx = 0
-    
-    for i in range(0, len(signal) - window_size, window_size):
-        window_energy = np.mean(signal[i:i+window_size]**2)
-        
-        # Detección del inicio de un tono
-        if not in_tone and window_energy > energy_threshold:
-            in_tone = True
-            start_idx = i
-            
-        # Detección del final de un tono
-        elif in_tone and window_energy < energy_threshold:
-            in_tone = False
-            end_idx = i
-            
-            # Procesar el segmento encontrado
-            segment = signal[start_idx:end_idx]
-            
-            # Ignorar ruidos o segmentos muy cortos
+    toneIn = False
+    startIndex = 0
+
+    for i in range(0, len(signal) - windowSize, windowSize):
+        window_energy = np.mean(signal[i:i + windowSize]**2)
+
+        if not toneIn and window_energy > energyThreshold:
+            toneIn = True
+            startIndex = i
+
+        elif toneIn and window_energy < energyThreshold:
+            toneIn = False
+            endIndex = i
+            segment = signal[startIndex:endIndex]
+
             if len(segment) < int(fs * 0.1):
                 continue
 
-            # --- Lógica de FFT y decodificación ---
+            # FFT aplicado al segmento
             Y = fft(segment)
             freqs = fftfreq(len(segment), 1 / fs)
-            
-            pos_mask = freqs > 0
-            freqs_pos = freqs[pos_mask]
-            mags = np.abs(Y[pos_mask])
-            
-            # Filtrar para buscar picos solo en el rango de interés DTMF
-            relevant_mask = (freqs_pos > 600) & (freqs_pos < 1550)
-            if not np.any(relevant_mask): continue
 
-            mags_relevant = mags[relevant_mask]
-            freqs_relevant = freqs_pos[relevant_mask]
-            
-            if len(mags_relevant) < 2: continue
-            
-            # Encontrar los dos picos de mayor magnitud
-            peak_indices = np.argsort(mags_relevant)[-2:]
-            detected_peaks = freqs_relevant[peak_indices]
-            
-            if len(detected_peaks) < 2: continue
-            
-            f_low, f_high = sorted(detected_peaks)
-            
-            # Encontrar la frecuencia de fila y columna más cercana
-            row = fr[np.argmin(np.abs(fr - f_low))]
-            col = fc[np.argmin(np.abs(fc - f_high))]
-            
-            # Mapeo inverso para encontrar el dígito
-            found_digit = '?'
-            for digit, (r, c) in dtmf_map.items():
+            pos = freqs > 0
+            freqsPos = freqs[pos]
+            mags = np.abs(Y[pos])
+
+            mask = (freqsPos > 600) & (freqsPos < 1550)
+            if not np.any(mask):
+                continue
+
+            freqsRel = freqsPos[mask]
+            magsRel = mags[mask]
+            if len(magsRel) < 2:
+                continue
+
+            # dos picos más grandes
+            peaks = np.argsort(magsRel)[-2:]
+            fLow, fHigh = sorted(freqsRel[peaks])
+
+            row = fr[np.argmin(np.abs(fr - fLow))]
+            col = fc[np.argmin(np.abs(fc - fHigh))]
+
+            found = '?'
+            for d, (r, c) in dtmfFreqs.items():
                 if r == row and c == col:
-                    found_digit = digit
+                    found = d
                     break
-            
-            digits += found_digit
-            
-            # Detenerse si ya encontramos 11 dígitos
+
+            digits += found
             if len(digits) >= 11:
                 break
-    
+
     return digits
 
-def load_signal():
-        """Maneja la carga y decodificación de una señal de archivo WAV."""
-        path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
-        if not path:
-            return
-        
-        try:
-            fs_load, data = wavfile.read(path)
-            
-            # Convertir a mono si es estéreo
-            if data.ndim > 1:
-                data = data[:, 0]
-            
-            # Normalizar la señal a un rango de -1.0 a 1.0
-            signal = data.astype(np.float32) / np.max(np.abs(data))
 
-            # Reproducir la señal cargada
-            path_relative = os.path.relpath(path, os.getcwd())
-            playsound(path_relative)
+def spectrogramPlot(signal, fs):
+    # spectograma para denotar bien las graficas
+    plt.figure("Espectrograma")
+    plt.clf()
+    # ventana 20 ms, solapamiento 10 ms
+    NFFT = int(0.02 * fs)
+    noverlap = int(0.01 * fs)
+    Pxx, freqs, bins, im = plt.specgram(
+        signal,
+        NFFT=NFFT,
+        Fs=fs,
+        noverlap=noverlap,
+        cmap='Blues',
+        scale='dB'
+    )
+    plt.ylim(500, 1600)
+    plt.title("Espectrograma de la señal", fontsize=14, fontweight='bold', color='#0050C8')
+    plt.xlabel("Tiempo (s)", color='#0050C8')
+    plt.ylabel("Frecuencia (Hz)", color='#0050C8')
+    cbar = plt.colorbar(im)
+    cbar.set_label('Intensidad (dB)', color='#0050C8')
+    cbar.ax.yaxis.set_tick_params(color='#0050C8')
+    plt.grid(False)
+    plt.show(block=False)
 
-            # Graficar la señal cargada
-            t = np.linspace(0, len(signal) / fs_load, num=len(signal))
-            plt.figure("Señal Cargada")
-            plt.clf()
-            plt.plot(t, signal, color='#FF9500') # Color naranja estilo iOS
-            plt.title("Señal cargada del archivo", fontsize=14, fontweight='bold')
-            plt.xlabel('Tiempo (s)')
-            plt.ylabel('Amplitud Normalizada')
-            plt.grid(True, linestyle='--', alpha=0.7)
-            plt.show(block=False)
 
-            # Decodificar la señal
-            decoded_digits = decode_signal(signal, fs_load)
-            return decoded_digits
-            
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo procesar el archivo:\n{e}")
+def signalLoad():
+    
+    path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
+    if not path:
+        return
+    # arreglo para evitar errores
+    try:
+        fs, data = wavfile.read(path)
+        if data.ndim > 1:
+            data = data[:, 0]
+        signal = data.astype(np.float32) / np.max(np.abs(data))
+
+        # Reproducir la señal cargada
+        path_relative = os.path.relpath(path, os.getcwd())
+        playsound(path_relative)
+
+        # Dominio del tiempo
+        t = np.linspace(0, len(signal) / fs, num=len(signal))
+        plt.figure("Señal Cargada")
+        plt.clf()
+        plt.plot(t, signal, color='#5AC8FA')  # azul claro
+        plt.title("Señal cargada del archivo", fontsize=14, fontweight='bold', color='#004AAB')
+        plt.xlabel("Tiempo (s)", color='#004AAB')
+        plt.ylabel("Amplitud Normalizada", color='#004AAB')
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.show(block=False)
+
+        # Espectrograma
+        spectrogramPlot(signal, fs)
+
+        # Decodificacion
+        return signalDecode(signal, fs)
+    
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo procesar el archivo:\n{e}")
