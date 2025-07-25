@@ -13,7 +13,7 @@ __pycache__/
 *.sublime-workspace
 
 # Archivos de audio generados o temporales
-*.wav
+
 *.mp3
 
 # Archivos de logs o temporales
